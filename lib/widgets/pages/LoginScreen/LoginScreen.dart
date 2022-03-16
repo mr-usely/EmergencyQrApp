@@ -1,10 +1,13 @@
-import 'package:emergency_app/CreateAccountScreen.dart';
-import 'package:emergency_app/DatabaseHelper.dart';
-import 'package:emergency_app/ScanQRScreen.dart';
-import 'package:emergency_app/Global.dart';
+import 'dart:convert';
+
+import 'package:emergency_app/widgets/pages/CreateAccountScreen/CreateAccountScreen.dart';
+import 'package:emergency_app/widgets/Database/DatabaseHelper.dart';
+import 'package:emergency_app/widgets/Global/Global.dart';
+import 'package:emergency_app/widgets/pages/ScanQRScreen/ScanQRScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:emergency_app/User.dart';
+import 'package:emergency_app/widgets/Models/User.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -28,35 +31,49 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    List userData = await DatabaseHelper.db
-        .checkUser(_usernameController!.text, _passwordController!.text);
+    var response = await http.get(Uri.parse(
+        '${G.link}/user/${_usernameController!.text}/${_passwordController!.text}/auth'));
+    print(response.body);
+    var res = User.fromJson(jsonDecode(response.body));
 
-    if (userData.isNotEmpty) {
+    // List userData = await DatabaseHelper.db
+    //     .checkUser(_usernameController!.text, _passwordController!.text);
+
+    if (response.body.isNotEmpty) {
       G.loggedUser = User(
-          id: userData[0]["ID"],
-          firstName: userData[0]["FirstName"],
-          middleName: userData[0]["MiddleName"],
-          lastName: userData[0]["LastName"],
-          email: userData[0]["Email"],
-          contact: userData[0]["ContactNo"]);
-
+          id: res.id,
+          firstName: res.firstName,
+          lastName: res.lastName,
+          birthDate: res.birthDate,
+          organDonnor: res.organDonnor,
+          allergy: res.allergy != null ? res.allergy : ' ',
+          email: res.email,
+          contact: res.contact,
+          pathology: res.pathology,
+          medication: res.medication,
+          persontocontact: res.persontocontact,
+          relation: res.relation,
+          contactnumber: res.contactnumber);
+      G.isScanned = false;
       _openDialog(CupertinoIcons.checkmark_alt_circle_fill,
           'Successfully Logged In!', 0.22, Colors.greenAccent[400]!);
-      Future.delayed(Duration(seconds: 3), () => _openScanQRScreen());
+      Future.delayed(const Duration(seconds: 3), () => _openScanQRScreen());
     } else {
       _openDialog(CupertinoIcons.clear_circled_solid,
-          'Wrong username or password.', 0.20, Colors.greenAccent[300]!);
+          'Wrong username or password.', 0.20, Colors.deepOrange[300]!);
+      return;
     }
   }
 
   _openScanQRScreen() async {
-    await Navigator.pushNamed(context, ScanQrScreen.ROUTE_ID);
+    await Navigator.pushReplacementNamed(context, ScanQrScreen.ROUTE_ID);
   }
 
   @override
   void initState() {
     _usernameController = TextEditingController();
     _passwordController = TextEditingController();
+
     super.initState();
   }
 
@@ -67,8 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Container(
         alignment: Alignment.center,
-        padding: EdgeInsets.all(30),
-        color: Color(0xFF29C5F6),
+        padding: const EdgeInsets.all(30),
+        color: const Color(0xFFFF6961),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -76,16 +93,17 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 150,
               width: 150,
               decoration: BoxDecoration(
-                  color: Colors.amber[400],
-                  borderRadius: BorderRadius.all(Radius.circular(100))),
+                  color: Color(0xFFFFE080),
+                  borderRadius: const BorderRadius.all(Radius.circular(100))),
               child: Container(
-                padding: EdgeInsets.all(35),
-                child: Image(image: AssetImage('images/location-icon_v.png')),
+                padding: const EdgeInsets.all(10),
+                child: const Image(
+                    image: AssetImage('images/location-icon_v.png')),
               ),
             ),
             Container(
-              margin: EdgeInsets.only(top: 15, bottom: 22),
-              child: Text('Log In Rescue 42\nAccount',
+              margin: const EdgeInsets.only(top: 15, bottom: 22),
+              child: const Text('Log In Rescue 42\nAccount',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: Colors.white,
@@ -95,18 +113,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w600)),
             ),
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 40, vertical: 3),
+              margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 3),
               child: Column(
                 children: [_inputField('Username', _usernameController!)],
               ),
             ),
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
+              margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 5),
               child: Column(
                 children: [_inputField('Password', _passwordController!)],
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 8,
             ),
             OutlinedButton(
@@ -114,27 +132,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 validateUser();
               },
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Colors.amber[400]),
+                backgroundColor: MaterialStateProperty.all(Color(0xFFFFE080)),
                 padding: MaterialStateProperty.all(EdgeInsets.symmetric(
                     horizontal: screenWidth! * 0.261, vertical: 12)),
                 side: MaterialStateProperty.all(
-                    BorderSide(color: Color(0xFF29C5F6), width: 0)),
+                    const BorderSide(color: Color(0xFFFF6961), width: 0)),
                 shape: MaterialStateProperty.all(RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30.0))),
               ),
               child: const Text("LOGIN",
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontFamily: 'Montserrat',
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                      fontWeight: FontWeight.w600)),
-            ),
-            TextButton(
-              onPressed: () {
-                _openCreateAccountScreen();
-              },
-              child: const Text("SIGN UP",
                   style: TextStyle(
                       fontSize: 15,
                       fontFamily: 'Montserrat',
@@ -152,25 +158,25 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextField(
       controller: controller,
       obscureText: label == 'Password' ? true : false,
-      style: TextStyle(
+      style: const TextStyle(
           fontFamily: 'Montserrat', color: Colors.white, fontSize: 14),
       decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
+          labelStyle: const TextStyle(
               fontFamily: 'Montserrat', color: Colors.white, fontSize: 14),
-          border: OutlineInputBorder(
+          border: const OutlineInputBorder(
               borderSide: BorderSide(
                   color: Colors.white, width: 2, style: BorderStyle.solid),
               borderRadius: BorderRadius.all(Radius.circular(10.0))),
-          focusedBorder: OutlineInputBorder(
+          focusedBorder: const OutlineInputBorder(
               borderSide: BorderSide(
                   color: Colors.white, width: 2, style: BorderStyle.solid),
               borderRadius: BorderRadius.all(Radius.circular(10.0))),
-          enabledBorder: OutlineInputBorder(
+          enabledBorder: const OutlineInputBorder(
               borderSide: BorderSide(
                   color: Colors.white, width: 2, style: BorderStyle.solid),
               borderRadius: BorderRadius.all(Radius.circular(10.0))),
-          contentPadding: EdgeInsets.all(10.0)),
+          contentPadding: const EdgeInsets.all(10.0)),
     );
   }
 
@@ -183,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 elevation: 0.0,
                 insetPadding:
                     EdgeInsets.symmetric(horizontal: screenWidth! * width),
-                shape: RoundedRectangleBorder(
+                shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.all(Radius.circular(20))),
                 content: Stack(
                     overflow: Overflow.visible,
@@ -193,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Text(
                           message,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontFamily: 'Montserrat',
                               fontSize: 18,
                               fontWeight: FontWeight.w600),

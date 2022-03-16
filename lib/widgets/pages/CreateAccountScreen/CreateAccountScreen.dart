@@ -1,8 +1,8 @@
-import 'package:emergency_app/LoginScreen.dart';
-import 'package:emergency_app/DatabaseHelper.dart';
-import 'package:emergency_app/ScanQRScreen.dart';
+import 'package:emergency_app/widgets/pages/LoginScreen/LoginScreen.dart';
+import 'package:emergency_app/widgets/Database/DatabaseHelper.dart';
+import 'package:emergency_app/widgets/pages/ScanQRScreen/ScanQRScreen.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:emergency_app/User.dart';
+import 'package:emergency_app/widgets/Models/User.dart';
 import 'package:flutter/material.dart';
 
 class CreateAccountScreen extends StatefulWidget {
@@ -16,18 +16,40 @@ class CreateAccountScreen extends StatefulWidget {
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
   double? screenHeight, screenWidth;
+  DateTime selectedDate = DateTime.now();
   TextEditingController? _firstnameController;
-  TextEditingController? _middlenameController;
+  TextEditingController? _birthdayController;
   TextEditingController? _lastnameController;
   TextEditingController? _usernameController;
   TextEditingController? _passwordController;
   TextEditingController? _emailController;
   TextEditingController? _phoneController;
 
+  // function for selecting date
+  _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(1800),
+      lastDate: DateTime(2025),
+      initialEntryMode: DatePickerEntryMode.input,
+      fieldLabelText: 'Birth Date',
+      fieldHintText: 'Month/Day/Year',
+      errorFormatText: 'Enter valid date',
+    );
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+        _birthdayController!.text =
+            selectedDate.toLocal().toString().split(' ')[0];
+        print(_birthdayController!.text);
+      });
+  }
+
   // add user and go to log in if success
   addUser() async {
     if (_firstnameController!.text.isEmpty &&
-        _middlenameController!.text.isEmpty &&
+        _birthdayController!.text.isEmpty &&
         _lastnameController!.text.isEmpty &&
         _usernameController!.text.isEmpty &&
         _passwordController!.text.isEmpty &&
@@ -73,8 +95,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
     int i = await DatabaseHelper.db.insertUser({
       DatabaseHelper.colFirstName: _firstnameController!.text,
-      DatabaseHelper.colMiddleName: _middlenameController!.text,
       DatabaseHelper.colLastName: _lastnameController!.text,
+      DatabaseHelper.colBirthDate: _birthdayController!.text,
       DatabaseHelper.colUsername: _usernameController!.text,
       DatabaseHelper.colPassword: _passwordController!.text,
       DatabaseHelper.colEmail: _emailController!.text,
@@ -87,53 +109,14 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   }
 
   _openLoginScreen() async {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          Future.delayed(
-              Duration(seconds: 3),
-              () async =>
-                  await Navigator.pushNamed(context, LoginScreen.ROUTE_ID));
-
-          return WillPopScope(
-              child: AlertDialog(
-                elevation: 0.0,
-                insetPadding:
-                    EdgeInsets.symmetric(horizontal: screenWidth! * 0.28),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(20))),
-                content: Stack(
-                    overflow: Overflow.visible,
-                    alignment: Alignment.center,
-                    children: <Widget>[
-                      Container(
-                        child: Text(
-                          'Success!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontFamily: 'Montserrat',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      Positioned(
-                          top: screenHeight! * -.075,
-                          child: Icon(
-                            CupertinoIcons.checkmark_alt_circle_fill,
-                            size: 65,
-                            color: Colors.greenAccent[400],
-                          ))
-                    ]),
-              ),
-              onWillPop: null);
-        });
+    await Navigator.pushNamed(context, LoginScreen.ROUTE_ID);
   }
 
   @override
   void initState() {
     _firstnameController = TextEditingController();
-    _middlenameController = TextEditingController();
     _lastnameController = TextEditingController();
+    _birthdayController = TextEditingController();
     _usernameController = TextEditingController();
     _passwordController = TextEditingController();
     _emailController = TextEditingController();
@@ -149,7 +132,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
       body: Container(
         alignment: Alignment.center,
         padding: EdgeInsets.all(30),
-        color: Color(0xFF29C5F6),
+        color: Color(0xFFFF6961),
         child: ListView(
           children: [
             Column(
@@ -159,10 +142,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   height: 150,
                   width: 150,
                   decoration: BoxDecoration(
-                      color: Colors.amber[400],
+                      color: Color(0xFFFFE080),
                       borderRadius: BorderRadius.all(Radius.circular(100))),
                   child: Container(
-                    padding: EdgeInsets.all(35),
+                    padding: EdgeInsets.all(10),
                     child:
                         Image(image: AssetImage('images/location-icon_v.png')),
                   ),
@@ -188,15 +171,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
                   child: Column(
-                    children: [
-                      _inputField('Middle Name', _middlenameController!)
-                    ],
+                    children: [_inputField('Last Name', _lastnameController!)],
                   ),
                 ),
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 40, vertical: 5),
                   child: Column(
-                    children: [_inputField('Last Name', _lastnameController!)],
+                    children: [_inputField('Birthday', _birthdayController!)],
                   ),
                 ),
                 Container(
@@ -234,11 +215,11 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   },
                   style: ButtonStyle(
                     backgroundColor:
-                        MaterialStateProperty.all(Colors.amber[400]),
+                        MaterialStateProperty.all(Color(0xFFFFE080)),
                     padding: MaterialStateProperty.all(EdgeInsets.symmetric(
                         horizontal: screenWidth! * 0.235, vertical: 12)),
                     side: MaterialStateProperty.all(
-                        BorderSide(color: Color(0xFF29C5F6), width: 0)),
+                        BorderSide(color: Color(0xFFFF6961), width: 0)),
                     shape: MaterialStateProperty.all(RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.0))),
                   ),
@@ -273,6 +254,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
   Widget _inputField(String label, TextEditingController controller) {
     return TextField(
       controller: controller,
+      onTap: () {
+        label == "Birthday" ? _selectDate(context) : print('input');
+      },
       obscureText: label == 'Password' ? true : false,
       style: TextStyle(
           fontFamily: 'Montserrat', color: Colors.white, fontSize: 14),
@@ -289,6 +273,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                   color: Colors.white, width: 2, style: BorderStyle.solid),
               borderRadius: BorderRadius.all(Radius.circular(10.0))),
           enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                  color: Colors.white, width: 2, style: BorderStyle.solid),
+              borderRadius: BorderRadius.all(Radius.circular(10.0))),
+          disabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
                   color: Colors.white, width: 2, style: BorderStyle.solid),
               borderRadius: BorderRadius.all(Radius.circular(10.0))),

@@ -1,5 +1,12 @@
 import 'dart:io';
 
+import 'package:emergency_app/widgets/Global/Global.dart';
+import 'package:emergency_app/widgets/Models/Contacts.dart';
+import 'package:emergency_app/widgets/Models/Pathologies.dart';
+import 'package:emergency_app/widgets/Models/ScannedUser.dart';
+import 'package:emergency_app/widgets/Models/User.dart';
+import 'package:emergency_app/widgets/pages/MyProfileScreen/MyProfileScreen.dart';
+import 'package:emergency_app/widgets/pages/MyProfileScreen/ProfileDetailsScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -16,6 +23,7 @@ class QRScreen extends StatefulWidget {
 
 class _QRScreenState extends State<QRScreen> {
   final qrKey = GlobalKey(debugLabel: 'QR');
+  double? screenHeight, screenWidth;
   Barcode? barcode;
   QRViewController? controller;
 
@@ -42,6 +50,8 @@ class _QRScreenState extends State<QRScreen> {
 
   @override
   Widget build(BuildContext context) {
+    screenHeight = MediaQuery.of(context).size.height;
+    screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
         body: Stack(alignment: Alignment.center, children: <Widget>[
       buildQRView(context),
@@ -130,8 +140,83 @@ class _QRScreenState extends State<QRScreen> {
           this.barcode = barcode;
 
           if (barcode != null) {
-            _makePhoneCall('09691542539');
+            List<String> result = barcode.code.toString().split('&');
+            // _openDialog(CupertinoIcons.checkmark_alt_circle_fill,
+            //     result.toString(), 0.3, Colors.greenAccent[400]!);
+            //validate if app: brgy_rescue_hotline
+            if (result[0] == "app: brgy_rescue_hotline") {
+              G.isScanned = true;
+              G.scannedUser = ScannedUser(
+                  name: result[1],
+                  birthDate: result[2],
+                  organDonnor: result[3] == null
+                      ? false
+                      : result[3] == 1
+                          ? true
+                          : false,
+                  allergy: result[4],
+                  email: result[5],
+                  contact: result[6]);
+
+              G.getContacts = Contacts(
+                  accountID: 0,
+                  contactName: result[9],
+                  contactRelation: result[10],
+                  phoneNumber: result[11]);
+
+              G.getPathologies = Pathologies(
+                  accountID: 0,
+                  medID: 0,
+                  sickness: result[7],
+                  medicines: result[8].split(',').toList());
+              _openMyProfileScreen();
+            } else {
+              print('invalid qr');
+            }
           }
         }));
+  }
+
+  _openMyProfileScreen() async {
+    await Navigator.pushReplacementNamed(
+        context, ProfileDetailsScreen.ROUTE_ID);
+  }
+
+  _openDialog(IconData iconName, String message, double width, Color color) {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return WillPopScope(
+              child: AlertDialog(
+                elevation: 0.0,
+                insetPadding:
+                    EdgeInsets.symmetric(horizontal: screenWidth! * width),
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(20))),
+                content: Stack(
+                    overflow: Overflow.visible,
+                    alignment: Alignment.center,
+                    children: <Widget>[
+                      Container(
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontFamily: 'Montserrat',
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Positioned(
+                          top: screenHeight! * -.079,
+                          child: Icon(
+                            iconName,
+                            size: 65,
+                            color: color,
+                          ))
+                    ]),
+              ),
+              onWillPop: null);
+        });
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:emergency_app/LoginScreen.dart';
-import 'package:emergency_app/QRScreen.dart';
+import 'package:emergency_app/widgets/pages/LoginScreen/LoginScreen.dart';
+import 'package:emergency_app/widgets/pages/QRScreen/QRScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -31,7 +31,7 @@ class _MainPageState extends State<MainPage> {
       body: Container(
         alignment: Alignment.center,
         padding: EdgeInsets.all(30),
-        color: Color(0xFF29C5F6),
+        color: Color(0xFFFF6961),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -39,7 +39,7 @@ class _MainPageState extends State<MainPage> {
               height: 150,
               width: 150,
               decoration: BoxDecoration(
-                  color: Colors.amber[400],
+                  color: Color(0xFFFFE080),
                   borderRadius: BorderRadius.all(Radius.circular(100))),
               child: Container(
                 padding: EdgeInsets.all(5),
