@@ -11,6 +11,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 class QRScreen extends StatefulWidget {
   const QRScreen({Key? key}) : super(key: key);
@@ -136,7 +137,7 @@ class _QRScreenState extends State<QRScreen> {
   void onQRViewCreated(QRViewController controller) {
     setState(() => this.controller = controller);
 
-    controller.scannedDataStream.listen((barcode) => setState(() {
+    controller.scannedDataStream.listen((barcode) => setState(() async {
           this.barcode = barcode;
 
           if (barcode != null) {
@@ -146,6 +147,15 @@ class _QRScreenState extends State<QRScreen> {
             //validate if app: brgy_rescue_hotline
             if (result[0] == "app: brgy_rescue_hotline") {
               G.isScanned = true;
+              
+              var response = await http.post(
+                    Uri.parse(
+                        '${G.link}/report/${result[5].toString()}/emergency'),
+                    headers: {"Accept": "application/json"},
+                    body: {"location": "Jones, Isabela"});
+
+                print(response.body + '${result[5]}');
+              
               G.scannedUser = ScannedUser(
                   name: result[1],
                   birthDate: result[2],
